@@ -9,6 +9,7 @@
 **Tools:**
  - PHP Native
  - MySQL
+ - ChatGPT
 
 **Images:**
 </br> ![screen](EX.png)
