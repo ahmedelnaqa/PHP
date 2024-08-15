@@ -4,5 +4,9 @@
 **How to use it:**
 </br> Students enter their national ID number as a unique identifier, and then the exam schedule and desk location are displayed below the input screen.
 
+**Tools:**
+ - PHP Native
+ - MySQL
+
 **Images:**
 </br> ![screen](EX.png)
