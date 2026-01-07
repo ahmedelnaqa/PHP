@@ -1,0 +1,1260 @@
+<?php
+// Admin access password
+define('ADMIN_PASSWORD', 'B7^5x87aKWPJ');
+// Start session
+session_start();
+// Check for logout request
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header('Location: admin.php');
+    exit;
+}
+// Handle login form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login']) && isset($_POST['password'])) {
+    if ($_POST['password'] === ADMIN_PASSWORD) {
+        $_SESSION['admin_authenticated'] = true;
+        header('Location: admin.php');
+        exit;
+    } else {
+        $login_error = true;
+    }
+}
+// Check if user is authenticated
+if (!isset($_SESSION['admin_authenticated']) || $_SESSION['admin_authenticated'] !== true) {
+    // Show login form
+    ?>
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>تسجيل الدخول - لوحة تحكم الإدارة</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+        <style>
+            body {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                direction: rtl;
+            }
+            .login-container {
+                background: white;
+                border-radius: 20px;
+                padding: 40px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+                max-width: 450px;
+                width: 100%;
+            }
+            .login-header {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .login-header .logo {
+                font-size: 3rem;
+                color: #667eea;
+                margin-bottom: 10px;
+            }
+            .form-control {
+                border-radius: 12px;
+                border: 2px solid #e9ecef;
+                padding: 15px;
+                font-size: 16px;
+            }
+            .form-control:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            }
+            .btn-login {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+                border-radius: 12px;
+                padding: 15px 30px;
+                font-size: 16px;
+                font-weight: 600;
+                color: white;
+                width: 100%;
+                transition: all 0.3s ease;
+            }
+            .btn-login:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            }
+            .alert {
+                border-radius: 12px;
+            }
+            .back-link {
+                text-align: center;
+                margin-top: 20px;
+            }
+            .back-link a {
+                color: #6c757d;
+                text-decoration: none;
+                transition: color 0.3s;
+            }
+            .back-link a:hover {
+                color: #667eea;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="login-container">
+            <div class="login-header">
+                <div class="logo">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h2 class="mb-2">لوحة تحكم الإدارة</h2>
+                <p class="text-muted">يرجى إدخال كلمة المرور للوصول</p>
+            </div>
+            <?php if (isset($login_error)): ?>
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.
+                </div>
+            <?php endif; ?>
+            <form method="post">
+                <input type="hidden" name="login" value="1">
+                <div class="mb-4">
+                    <label for="password" class="form-label fw-bold">كلمة المرور</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password"
+                               placeholder="أدخل كلمة المرور" required autocomplete="current-password">
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                            <i class="bi bi-eye" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-login">
+                    <i class="bi bi-box-arrow-in-left me-2"></i>
+                    تسجيل الدخول
+                </button>
+            </form>
+            <div class="back-link">
+                <a href="index.php">
+                    <i class="bi bi-arrow-right me-2"></i>
+                    العودة للصفحة الرئيسية
+                </a>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            function togglePassword() {
+                const passwordField = document.getElementById('password');
+                const toggleIcon = document.getElementById('toggleIcon');
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    toggleIcon.className = 'bi bi-eye-slash';
+                } else {
+                    passwordField.type = 'password';
+                    toggleIcon.className = 'bi bi-eye';
+                }
+            }
+            // Focus on password field when page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('password').focus();
+            });
+        </script>
+    </body>
+    </html>
+<?php
+    exit;
+}
+// Continue with the normal admin page if authenticated
+?>
+<?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Include database configuration and Student model
+require_once __DIR__ . '/config/database.php'; // This includes the DatabaseConfig class
+require_once __DIR__ . '/models/Student.php';
+
+// Ensure exports directory exists
+$exportsDir = __DIR__ . '/exports/';
+if (!is_dir($exportsDir)) {
+    mkdir($exportsDir, 0755, true);
+}
+
+// Define DataExporter class
+class DataExporter {
+
+    private $batchSize;
+    private $exportsDir;
+    private $pdoInstance; // Store the PDO instance passed from outside
+
+    public function __construct($pdoInstance, $batchSize = 50) {
+        $this->pdoInstance = $pdoInstance; // Accept and store the PDO instance
+        $this->batchSize = (int)$batchSize;
+        if ($this->batchSize < 1) {
+            $this->batchSize = 50; // Default batch size
+        }
+        $this->exportsDir = __DIR__ . '/exports/';
+        if (!is_dir($this->exportsDir)) {
+            mkdir($this->exportsDir, 0755, true);
+        }
+    }
+
+    /**
+     * Clears all existing ZIP files in the exports directory.
+     */
+    private function clearExistingZipFiles() {
+        $files = glob($this->exportsDir . '*.zip');
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+    }
+
+    /**
+     * Generates all ZIP files based on the current batch size, sorted by created_at.
+     * This function clears old files first.
+     * @return array List of generated filenames.
+     */
+    public function generateAllZipFiles() {
+        $this->clearExistingZipFiles();
+
+        // Fetch all students ordered by created_at (ascending) directly from the database
+        $allStudents = $this->fetchAllStudentsSortedByCreatedAt();
+
+        // --- DEBUGGING: Print the first few rows fetched ---
+        echo "<!-- DEBUG: First 3 rows from database:\n";
+        for ($i = 0; $i < min(3, count($allStudents)); $i++) {
+            var_export($allStudents[$i]);
+            echo "\n";
+        }
+        echo "-->\n";
+        // --- END DEBUG ---
+
+        $generatedFiles = [];
+        $currentBatch = [];
+        $batchNumber = 1;
+
+        foreach ($allStudents as $student) {
+            $currentBatch[] = $student;
+
+            if (count($currentBatch) >= $this->batchSize) {
+                $zipFilename = $this->createZipFile($currentBatch, $batchNumber);
+                $generatedFiles[] = $zipFilename;
+                $currentBatch = [];
+                $batchNumber++;
+            }
+        }
+
+        // Handle the last batch if it has any students left
+        if (!empty($currentBatch)) {
+            $zipFilename = $this->createZipFile($currentBatch, $batchNumber);
+            $generatedFiles[] = $zipFilename;
+        }
+
+        return $generatedFiles;
+    }
+
+    /**
+     * Fetches all students from the database, ordered by created_at ASC.
+     * This replaces the need for Student::allSortedByCreatedAt().
+     * @return array Array of student data associative arrays.
+     */
+    private function fetchAllStudentsSortedByCreatedAt() {
+        // Use the stored PDO instance
+        // Corrected SQL query to match SQLite schema
+        $sql = "SELECT nid, name_ar, name_en, name_ar AS name_on_card, home_number, mobile_number, address_ar, address_en, birthday, email, image_path, created_at FROM students ORDER BY created_at ASC";
+        $stmt = $this->pdoInstance->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Creates a single ZIP file for a batch of students.
+     * @param array $batch Array of student data associative arrays.
+     * @param int $batchNumber The number of the current batch.
+     * @return string The filename of the created ZIP file.
+     */
+    private function createZipFile($batch, $batchNumber) {
+        $zipFilename = $this->exportsDir . 'batch_' . $batchNumber . '.zip';
+        $zip = new ZipArchive();
+        if ($zip->open($zipFilename, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+            // Updated CSV header to match SQLite schema
+            $csvData = "NID,Name Arabic,Name English,Name on Card,Home Number,Mobile Number,Address Arabic,Address English,Birthday,Email,Image Filename\n";
+            // Create image directory inside the zip
+            $zip->addEmptyDir('batch_' . $batchNumber . '_images');
+
+            foreach ($batch as $studentData) {
+                // Map database fields to variables (using SQLite column names)
+                $nid = $studentData['nid'];
+                $nameAr = $studentData['name_ar'];
+                $nameEn = $studentData['name_en'];
+                $nameOnCard = $studentData['name_on_card']; // Using name_ar as name_on_card
+                $homeNumber = $studentData['home_number'];
+                $mobileNumber = $studentData['mobile_number'];
+                $addressAr = $studentData['address_ar'];
+                $addressEn = $studentData['address_en'];
+                $birthday = $studentData['birthday'];
+                $email = $studentData['email'];
+                // Use the 'image_path' field from the database row
+                $imagePathFromDb = $studentData['image_path'];
+
+                // Add student data to CSV
+                $csvData .= "\"$nid\",\"$nameAr\",\"$nameEn\",\"$nameOnCard\",\"$homeNumber\",\"$mobileNumber\",\"$addressAr\",\"$addressEn\",\"$birthday\",\"$email\",";
+
+                // Check if the image path from the database is valid and exists relative to the project root
+                if ($imagePathFromDb && file_exists(__DIR__ . '/' . $imagePathFromDb)) {
+                    $imageBasename = basename($imagePathFromDb);
+                    // Add the image file to the zip inside the images subfolder
+                    $zip->addFile(__DIR__ . '/' . $imagePathFromDb, 'batch_' . $batchNumber . '_images/' . $imageBasename);
+                    $csvData .= "\"batch_" . $batchNumber . "_images/$imageBasename\"\n";
+                } else {
+                    // If no image path or file doesn't exist, add an empty string to the CSV
+                    $csvData .= "\"\"\n";
+                }
+            }
+
+            // Add the CSV file to the root of the zip
+            $zip->addFromString('student_data_batch_' . $batchNumber . '.csv', $csvData);
+            $zip->close();
+        } else {
+            throw new Exception("Failed to create zip file: $zipFilename");
+        }
+        return $zipFilename;
+    }
+
+    /**
+     * Gets a list of existing ZIP files in the exports directory.
+     * @return array List of file info arrays.
+     */
+    public function getExistingZipFiles() {
+        $files = glob($this->exportsDir . '*.zip');
+        $zipFiles = [];
+        $totalBatches = 0;
+
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                $basename = basename($file, '.zip');
+                preg_match('/batch_(\d+)/', $basename, $matches);
+                $batchNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+                if ($batchNumber > 0) {
+                    $zipFiles[] = [
+                        'filename' => $file,
+                        'batch' => $batchNumber,
+                        'url' => './exports/' . basename($file), // Assuming exports are served from ./exports/
+                        'file_size' => filesize($file),
+                        'created_at' => filemtime($file)
+                    ];
+                    if ($batchNumber > $totalBatches) {
+                        $totalBatches = $batchNumber;
+                    }
+                }
+            }
+        }
+
+        // Sort files by batch number
+        usort($zipFiles, function($a, $b) {
+            return $a['batch'] - $b['batch'];
+        });
+
+        foreach ($zipFiles as &$file) {
+            $file['total_batches'] = $totalBatches;
+        }
+
+        return $zipFiles;
+    }
+
+    /**
+     * Gets statistics about the export process.
+     * @return array Stats array.
+     */
+    public function getExportStats() {
+        // Use the Student model's count method
+        $totalStudents = \Student::count();
+        $existingZips = $this->getExistingZipFiles();
+        $existingCount = count($existingZips);
+        $totalBatches = ceil($totalStudents / $this->batchSize);
+
+        return [
+            'total_students' => $totalStudents,
+            'batch_size' => $this->batchSize,
+            'total_batches' => $totalBatches,
+            'existing_zips' => $existingCount
+        ];
+    }
+}
+
+// Get the PDO instance from the DatabaseConfig class
+try {
+    $pdo = \DatabaseConfig::getConnection();
+} catch (PDOException $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+// Initialize data exporter - Pass the $pdo instance obtained from DatabaseConfig
+$batchSize = isset($_GET['batch_size']) ? (int)$_GET['batch_size'] : 50;
+$dataExporter = new DataExporter($pdo, $batchSize);
+
+// Handle pagination variables for all actions
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$recordsPerPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 50;
+$offset = ($page - 1) * $recordsPerPage;
+
+// Handle export actions
+if (isset($_GET['action'])) {
+    switch ($_GET['action']) {
+        case 'generate_zips':
+            try {
+                $generatedFiles = $dataExporter->generateAllZipFiles();
+                $message = 'تم إنشاء ' . count($generatedFiles) . ' ملف ZIP بنجاح!';
+                $messageType = 'success';
+            } catch (Exception $e) {
+                $message = 'خطأ في إنشاء ملفات ZIP: ' . $e->getMessage();
+                $messageType = 'danger';
+            }
+            // Redirect back without action parameter to avoid re-triggering on refresh
+            if (!isset($failed)) {
+                header('Location: admin.php?batch_size=' . $batchSize . '#export');
+                exit;
+            }
+            break;
+    }
+}
+
+// Allowed records per page options
+$allowedPerPage = [50, 100, 150];
+if (!in_array($recordsPerPage, $allowedPerPage)) {
+    $recordsPerPage = 50;
+}
+
+// Get total count
+$totalRecords = Student::count();
+$totalPages = ceil($totalRecords / $recordsPerPage);
+
+// Get students for current page (sorted by NID for display, not export)
+$students = Student::all($recordsPerPage, $offset);
+
+// Handle delete request
+$message = '';
+$messageType = '';
+if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['nid'])) {
+    $nid = $_GET['nid'];
+    try {
+        $student = Student::findByNid($nid);
+        if ($student) {
+            $result = $student->delete();
+            if ($result) {
+                $message = 'تم حذف الطالب بنجاح!';
+                $messageType = 'success';
+                // Refresh the page to update the count
+                header('Location: admin.php?per_page=' . $recordsPerPage . '&page=' . $page);
+                exit;
+            } else {
+                $message = 'فشل في حذف الطالب';
+                $messageType = 'danger';
+            }
+        }
+    } catch (Exception $e) {
+        $message = 'خطأ في حذف الطالب: ' . $e->getMessage();
+        $messageType = 'danger';
+    }
+}
+
+// Handle edit form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit') {
+    $nid = $_POST['nid'];
+    if ($nid && isset($_POST['name_ar'], $_POST['name_en'], $_POST['name_on_card'],
+                      $_POST['home_number'], $_POST['mobile_number'], $_POST['address_ar'],
+                      $_POST['address_en'], $_POST['birthday'], $_POST['email'])) {
+        try {
+            $student = Student::findByNid($nid);
+            if ($student) {
+                $student->setNameAr($_POST['name_ar']);
+                $student->setNameEn($_POST['name_en']);
+                // Note: If name_on_card is stored separately, update accordingly
+                // For now, assuming name_on_card is derived from name_ar in export
+                $student->setHomeNumber($_POST['home_number']);
+                $student->setMobileNumber($_POST['mobile_number']);
+                $student->setAddressAr($_POST['address_ar']);
+                $student->setAddressEn($_POST['address_en']);
+                $student->setBirthday($_POST['birthday']);
+                $student->setEmail($_POST['email']);
+                $student->save();
+                $message = 'تم تحديث بيانات الطالب بنجاح!';
+                $messageType = 'success';
+                // Refresh to show updated data
+                header('Location: admin.php?per_page=' . $recordsPerPage . '&page=' . $page . '#table');
+                exit;
+            }
+        } catch (Exception $e) {
+            $message = 'خطأ في تحديث البيانات: ' . $e->getMessage();
+            $messageType = 'danger';
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الإدارة - نظام الطلاب</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+            color: #333;
+            direction: rtl;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: none;
+            transition: transform 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .stats-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stats-label {
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-weight: 600;
+        }
+        .table tbody td {
+            padding: 12px 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .student-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #e9ecef;
+            transition: transform 0.3s ease;
+        }
+        .student-image:hover {
+            transform: scale(1.1);
+        }
+        .btn-edit {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        .btn-edit:hover {
+            background: linear-gradient(135deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+        }
+        .btn-delete {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        .btn-delete:hover {
+            background: linear-gradient(135deg, #d32f2f, #f44336);
+            transform: translateY(-2px);
+        }
+        .pagination-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .per-page-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .per-page-selector select {
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        .back-btn {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .back-btn:hover {
+            background: linear-gradient(135deg, #5a6268, #6c757d);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+        .logout-btn {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .logout-btn:hover {
+            background: linear-gradient(135deg, #c82333, #dc3545);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+        .edit-form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            padding: 12px;
+            transition: border-color 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .alert {
+            border-radius: 12px;
+            font-weight: 500;
+            margin-bottom: 25px;
+        }
+        @media (max-width: 768px) {
+            .header .container {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .stats-number {
+                font-size: 2rem;
+            }
+            .table-responsive {
+                font-size: 0.8rem;
+            }
+            .pagination-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .per-page-selector {
+                justify-content: center;
+            }
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .stats-card, .table-container {
+            animation: slideIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <header class="header">
+        <div class="container">
+            <h1><i class="bi bi-person-check-fill me-2"></i>لوحة تحكم الإدارة</h1>
+            <div class="d-flex gap-2">
+                <a href="?logout=1" class="logout-btn">
+                    <i class="bi bi-box-arrow-left ms-2"></i>تسجيل خروج
+                </a>
+                <a href="index.php" class="back-btn">
+                    <i class="bi bi-house-door ms-2"></i>العودة للرئيسية
+                </a>
+            </div>
+        </div>
+    </header>
+    <main class="container my-5">
+        <!-- Success/Error Messages -->
+        <?php if ($message): ?>
+            <div class="alert alert-<?php echo $messageType; ?>" role="alert">
+                <i class="bi bi-<?php echo $messageType === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
+                <?php echo htmlspecialchars($message); ?>
+            </div>
+        <?php endif; ?>
+        <!-- Statistics Card -->
+        <div class="stats-card">
+            <div class="row align-items-center">
+                <div class="col-md-3 text-center">
+                    <div class="stats-number">
+                        <?php echo number_format($totalRecords); ?>
+                    </div>
+                </div>
+                <div class="col-md-6 text-center">
+                    <h4 class="mb-2">إجمالي عدد الطلاب المسجلين</h4>
+                    <div class="stats-label">عدد الملفات الطلابية في قاعدة البيانات</div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <div class="stats-number">
+                        <i class="bi bi-people-fill text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Records Per Page and Pagination -->
+        <div class="table-container">
+            <div id="table">
+                <div class="pagination-wrapper mb-4">
+                    <div class="per-page-selector">
+                        <label for="perPageSelect" class="form-label mb-0">عرض:</label>
+                        <select id="perPageSelect" class="form-select" style="width: auto;">
+                            <?php foreach ($allowedPerPage as $option): ?>
+                                <option value="<?php echo $option; ?>" <?php echo $recordsPerPage == $option ? 'selected' : ''; ?>>
+                                    <?php echo $option; ?> سجلاً
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <span>لكل صفحة</span>
+                    </div>
+                    <nav aria-label="Student records pagination">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                <a class="page-link" href="?page=<?php echo max(1, $page - 1); ?>&per_page=<?php echo $recordsPerPage; ?>">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <?php
+                            $startPage = max(1, $page - 2);
+                            $endPage = min($totalPages, $page + 2);
+                            if ($startPage > 1) {
+                                echo '<li class="page-item"><a class="page-link" href="?page=1&per_page=' . $recordsPerPage . '">1</a></li>';
+                                if ($startPage > 2) {
+                                    echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                                }
+                            }
+                            for ($i = $startPage; $i <= $endPage; $i++) {
+                                echo '<li class="page-item ' . ($i == $page ? 'active' : '') . '">';
+                                echo '<a class="page-link" href="?page=' . $i . '&per_page=' . $recordsPerPage . '">' . $i . '</a>';
+                                echo '</li>';
+                            }
+                            if ($endPage < $totalPages) {
+                                if ($endPage < $totalPages - 1) {
+                                    echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                                }
+                                echo '<li class="page-item"><a class="page-link" href="?page=' . $totalPages . '&per_page=' . $recordsPerPage . '">' . $totalPages . '</a></li>';
+                            }
+                            ?>
+                            <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
+                                <a class="page-link" href="?page=<?php echo min($totalPages, $page + 1); ?>&per_page=<?php echo $recordsPerPage; ?>">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    <div class="text-muted">
+                        عرض <?php echo ($offset + 1) . ' - ' . min($offset + $recordsPerPage, $totalRecords); ?> من <?php echo $totalRecords; ?> سجلاً
+                    </div>
+                </div>
+                <?php if (empty($students)): ?>
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        لا يوجد طلاب مسجلون في قاعدة البيانات حتى الآن.
+                    </div>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">#</th>
+                                    <th style="width: 80px;">الصورة</th>
+                                    <th>رقم البطاقة</th>
+                                    <th>الاسم بالعربية</th>
+                                    <th>الاسم بالإنجليزية</th>
+                                    <th>الاسم على البطاقة</th>
+                                    <th>الموبايل</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>تاريخ الميلاد</th>
+                                    <th>تاريخ الإضافة</th>
+                                    <th style="width: 120px;">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($students as $index => $student): ?>
+                                    <tr id="student-row-<?php echo $student->getNid(); ?>" class="student-row">
+                                        <td><?php echo $offset + $index + 1; ?></td>
+                                        <td>
+                                            <?php if ($student->getImagePath() && file_exists($student->getImagePath())): ?>
+                                                <img src="<?php echo htmlspecialchars($student->getImagePath()); ?>"
+                                                     alt="صورة الطالب"
+                                                     class="student-image">
+                                            <?php else: ?>
+                                                <div class="student-image bg-secondary d-flex align-items-center justify-content-center">
+                                                    <i class="bi bi-person-fill text-white fs-4"></i>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <strong><?php echo htmlspecialchars($student->getNid()); ?></strong>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($student->getNameAr()); ?></td>
+                                        <td><?php echo htmlspecialchars($student->getNameEn()); ?></td>
+                                        <td><?php echo htmlspecialchars($student->getNameAr()); ?></td> <!-- Assuming name on card is same as name_ar -->
+                                        <td class="text-center">
+                                            <?php echo htmlspecialchars($student->getMobileNumber()); ?>
+                                            <?php if ($student->getHomeNumber()): ?>
+                                                <br><small class="text-muted"><?php echo htmlspecialchars($student->getHomeNumber()); ?></small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($student->getEmail()); ?></td>
+                                        <td><?php echo date('d/m/Y', strtotime($student->getBirthday())); ?></td>
+                                        <td><?php echo date('d/m/Y H:i', strtotime($student->getCreatedAt())); ?></td>
+                                        <td>
+                                            <div class="d-flex gap-1">
+                                                <button class="btn btn-edit btn-sm" onclick="editStudent('<?php echo $student->getNid(); ?>')">
+                                                    <i class="bi bi-pencil-square"></i> تعديل
+                                                </button>
+                                                <button class="btn btn-delete btn-sm" onclick="deleteStudent('<?php echo $student->getNid(); ?>', '<?php echo htmlspecialchars($student->getNameAr()); ?>')">
+                                                    <i class="bi bi-trash"></i> حذف
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+                <!-- Edit Form (Hidden by default, shown via JavaScript) -->
+                <div id="edit-form-container" class="edit-form-container mt-4" style="display: none;">
+                    <h5><i class="bi bi-pencil-square me-2"></i>تعديل بيانات الطالب</h5>
+                    <form id="edit-form" method="post" action="#" class="mt-3">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" name="nid" id="edit-nid">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="edit-name_ar">الاسم بالعربية *</label>
+                                    <input type="text" class="form-control" id="edit-name_ar" name="name_ar" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="edit-name_en">الاسم بالإنجليزية *</label>
+                                    <input type="text" class="form-control" id="edit-name_en" name="name_en" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="edit-name_on_card">الاسم على البطاقة *</label>
+                                    <input type="text" class="form-control" id="edit-name_on_card" name="name_on_card" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="edit-birthday">تاريخ الميلاد *</label>
+                                    <input type="date" class="form-control" id="edit-birthday" name="birthday" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="edit-home_number">رقم الهاتف المنزلي</label>
+                                    <input type="text" class="form-control" id="edit-home_number" name="home_number">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="edit-mobile_number">رقم الهاتف المحمول *</label>
+                                    <input type="text" class="form-control" id="edit-mobile_number" name="mobile_number" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="edit-address_ar">العنوان بالعربية *</label>
+                                    <textarea class="form-control" id="edit-address_ar" name="address_ar" required></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="edit-address_en">العنوان بالإنجليزية *</label>
+                                    <textarea class="form-control" id="edit-address_en" name="address_en" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-email">البريد الإلكتروني *</label>
+                            <input type="email" class="form-control" id="edit-email" name="email" required>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                                <i class="bi bi-x-circle"></i> إلغاء
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> حفظ التعديلات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Data Export Section -->
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">
+                    <i class="bi bi-file-earmark-zip-fill me-2"></i>
+                    تصدير البيانات
+                </h4>
+                <div class="d-flex gap-2">
+                    <select id="batchSizeSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="50" <?php echo $batchSize == 50 ? 'selected' : ''; ?>>50 سجل لكل دفعة</option>
+                        <option value="100" <?php echo $batchSize == 100 ? 'selected' : ''; ?>>100 سجل لكل دفعة</option>
+                        <option value="150" <?php echo $batchSize == 150 ? 'selected' : ''; ?>>150 سجل لكل دفعة</option>
+                    </select>
+                    <button onclick="generateZips()" class="btn btn-success btn-sm">
+                        <i class="bi bi-file-earmark-zip me-2"></i>
+                        إنشاء ملفات ZIP
+                    </button>
+                    <button onclick="refreshExportList()" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        تحديث القائمة
+                    </button>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>ملاحظة:</strong>
+                        عند إنشاء ملفات ZIP، سيتم حذف جميع الملفات السابقة. ثم يتم إنشاء ملفات جديدة مرتّبة حسب تاريخ الإضافة (الأقدم أولاً)، مع <?php echo $batchSize; ?> سجلاً في كل ملف ZIP.
+                    </div>
+                </div>
+            </div>
+            <h6 class="mb-3">ملفات ZIP المتاحة للتحميل:</h6>
+            <div id="exportFilesList">
+                <?php
+                $existingZips = $dataExporter->getExistingZipFiles();
+                if (empty($existingZips)) {
+                    echo '<div class="alert alert-warning" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            لا توجد ملفات ZIP متاحة حالياً. يرجى النقر على "إنشاء ملفات ZIP" لإنشاء ملفات التصدير.
+                          </div>';
+                } else {
+                    echo '<div class="row">';
+                    foreach ($existingZips as $zipFile) {
+                        $fileSizeMB = number_format($zipFile['file_size'] / 1048576, 2); // Convert to MB
+                        echo '<div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-file-earmark-zip-fill text-primary fs-4 me-2"></i>
+                                            <h6 class="card-title mb-0">' . basename($zipFile['filename'], '.zip') . '</h6>
+                                        </div>
+                                        <div class="small text-muted mb-3">
+                                            <div>الدفعة رقم: ' . $zipFile['batch'] . ' من ' . $zipFile['total_batches'] . '</div>
+                                            <div>الحجم: ' . $fileSizeMB . ' MB</div>
+                                            <div>تاريخ الإنشاء: ' . date('d/m/Y H:i', strtotime($zipFile['created_at'])) . '</div>
+                                        </div>
+                                        <a href="' . htmlspecialchars($zipFile['url']) . '" class="btn btn-primary btn-sm w-100" download>
+                                            <i class="bi bi-download me-2"></i>
+                                            تحميل الدفعة
+                                        </a>
+                                    </div>
+                                </div>
+                              </div>';
+                    }
+                    echo '</div>';
+                }
+                ?>
+            </div>
+            <div class="mt-4">
+                <div class="progress" style="height: 20px;">
+                    <?php
+                    $stats = $dataExporter->getExportStats();
+                    $progress = ($stats['existing_zips'] / max(1, $stats['total_batches'])) * 100;
+                    ?>
+                    <div class="progress-bar" role="progressbar"
+                         style="width: <?php echo min(100, $progress); ?>%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);">
+                        <?php echo $stats['existing_zips'] . ' / ' . $stats['total_batches'] . ' دفعة'; ?>
+                    </div>
+                </div>
+                <small class="text-muted mt-1 d-block">
+                    <?php echo 'إجمالي السجلات: ' . number_format($stats['total_students']) . ' | حجم الدفعة: ' . $stats['batch_size'] . ' | إجمالي الدفعات: ' . $stats['total_batches']; ?>
+                </small>
+            </div>
+        </div>
+        <!-- Footer -->
+        <footer class="mt-5 text-center text-muted">
+            <div class="row">
+                <div class="col-md-12">
+                    جميع الحقوق محفوظة © وحدة البحوث والمعلومات - كلية علوم الرياضية للبنين - أبوقير
+                </div>
+            </div>
+        </footer>
+    </main>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>تأكيد الحذف
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="delete-message"></p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>تنبيه:</strong> سيتم حذف جميع بيانات الطالب نهائياً ولا يمكن التراجع عن هذا الإجراء.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> إلغاء
+                    </button>
+                    <a href="#" id="confirm-delete-btn" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> نعم، احذف
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables for edit functionality
+        let editingStudentId = null;
+        // Function to handle records per page selection
+        document.getElementById('perPageSelect').addEventListener('change', function() {
+            const newPerPage = this.value;
+            const currentPage = <?php echo $page; ?>;
+            const newUrl = `?page=1&per_page=${newPerPage}#table`;
+            window.location.href = newUrl;
+        });
+        // Function to delete a student with confirmation
+        function deleteStudent(nid, name) {
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            const messageEl = document.getElementById('delete-message');
+            const confirmBtn = document.getElementById('confirm-delete-btn');
+            messageEl.innerHTML = `هل أنت متأكد من حذف الطالب <strong>${name}</strong>؟`;
+            confirmBtn.href = `?action=delete&nid=${nid}&page=<?php echo $page; ?>&per_page=<?php echo $recordsPerPage; ?>`;
+            deleteModal.show();
+        }
+        // Function to edit a student
+        async function editStudent(nid) {
+            try {
+                // Show loading overlay
+                const loadingOverlay = document.getElementById('loading-overlay');
+                loadingOverlay.style.display = 'flex';
+                // Hide any previous edit forms
+                document.getElementById('edit-form-container').style.display = 'none';
+                // Simulate loading
+                await new Promise(resolve => setTimeout(resolve, 300));
+                // Get student data from PHP-generated JavaScript variables
+                <?php
+                echo 'const studentData = {';
+                foreach ($students as $student) {
+                    echo '"' . $student->getNid() . '": {
+                        name_ar: "' . addslashes($student->getNameAr()) . '",
+                        name_en: "' . addslashes($student->getNameEn()) . '",
+                        name_on_card: "' . addslashes($student->getNameAr()) . '", // Assuming name on card is same as name_ar
+                        home_number: "' . addslashes($student->getHomeNumber()) . '",
+                        mobile_number: "' . addslashes($student->getMobileNumber()) . '",
+                        address_ar: "' . addslashes($student->getAddressAr()) . '",
+                        address_en: "' . addslashes($student->getAddressEn()) . '",
+                        birthday: "' . $student->getBirthday() . '",
+                        email: "' . addslashes($student->getEmail()) . '"
+                    },';
+                }
+                echo '};';
+                ?>
+                const student = studentData[nid];
+                if (student) {
+                    // Populate form with student data
+                    document.getElementById('edit-nid').value = nid;
+                    document.getElementById('edit-name_ar').value = student.name_ar;
+                    document.getElementById('edit-name_en').value = student.name_en;
+                    document.getElementById('edit-name_on_card').value = student.name_on_card;
+                    document.getElementById('edit-birthday').value = student.birthday;
+                    document.getElementById('edit-home_number').value = student.home_number;
+                    document.getElementById('edit-mobile_number').value = student.mobile_number;
+                    document.getElementById('edit-address_ar').value = student.address_ar;
+                    document.getElementById('edit-address_en').value = student.address_en;
+                    document.getElementById('edit-email').value = student.email;
+                    // Show form and scroll to it
+                    document.getElementById('edit-form-container').style.display = 'block';
+                    document.getElementById('edit-form-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Highlight the row being edited
+                    if (editingStudentId) {
+                        const oldRow = document.getElementById(`student-row-${editingStudentId}`);
+                        if (oldRow) {
+                            oldRow.classList.remove('table-primary');
+                        }
+                    }
+                    const currentRow = document.getElementById(`student-row-${nid}`);
+                    if (currentRow) {
+                        currentRow.classList.add('table-primary');
+                        editingStudentId = nid;
+                    }
+                } else {
+                    alert('لم يتم العثور على بيانات الطالب');
+                }
+            } catch (error) {
+                console.error('Error loading student ', error);
+                alert('حدث خطأ في تحميل بيانات الطالب');
+            } finally {
+                // Hide loading overlay
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        }
+        // Function to cancel editing
+        function cancelEdit() {
+            document.getElementById('edit-form-container').style.display = 'none';
+            document.getElementById('edit-form').reset();
+            // Remove row highlighting
+            if (editingStudentId) {
+                const row = document.getElementById(`student-row-${editingStudentId}`);
+                if (row) {
+                    row.classList.remove('table-primary');
+                }
+                editingStudentId = null;
+            }
+        }
+        // Handle form submission with loading state
+        document.getElementById('edit-form').addEventListener('submit', function() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
+        });
+        // Animate statistics card on load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.querySelector('.stats-card').style.opacity = '1';
+            }, 100);
+        });
+        // Prevent accidental page navigation on form submit
+        document.querySelectorAll('.btn-edit, .btn-delete').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        });
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key to cancel edit
+            if (e.key === 'Escape' && document.getElementById('edit-form-container').style.display === 'block') {
+                cancelEdit();
+            }
+        });
+        // Function to generate ZIP files
+        function generateZips() {
+            const batchSize = document.getElementById('batchSizeSelect').value;
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (confirm('هل تريد إنشاء ملفات ZIP للبيانات؟\n\nسيؤدي هذا إلى حذف جميع ملفات ZIP الحالية أولاً، ثم إنشاء ملفات جديدة مرتّبة حسب تاريخ الإضافة (الأقدم أولاً)، مع ' + batchSize + ' سجلاً في كل ملف.')) {
+                loadingOverlay.style.display = 'flex';
+                // Redirect to generate ZIP files
+                window.location.href = `?action=generate_zips&batch_size=${batchSize}`;
+            }
+        }
+        // Function to refresh export files list
+        function refreshExportList() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
+            // Refresh the page to reload the export list
+            window.location.reload();
+        }
+        // Handle batch size change
+        document.getElementById('batchSizeSelect').addEventListener('change', function() {
+            const newBatchSize = this.value;
+            // Optional: Auto-refresh or show preview
+            console.log('Batch size changed to:', newBatchSize);
+        });
+    </script>
+</body>
+</html>
