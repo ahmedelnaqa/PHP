@@ -4,3 +4,8 @@
 #### - Functionality: Provides a student-facing page for image upload.
 #### - Automation: The system programmatically resizes and formats uploaded images to the precise specifications of the university ID card.
 #### - Benefit: Ensures uniformity and significantly speeds up the card printing process.
+
+
+### Tools:
+- Qwen AI Coder
+- Note++
